@@ -17,5 +17,5 @@ Step by step:
 1. FUEL switches -> OVERRIDE (backlight will go out)
 1. Configure roll axis
 1. Configure yaw axis
-1. FUEL switches -> NORM
+1. FUEL switches -> NORM (backlight will come back on)
 1. Configure the rest of your axis/buttons.
