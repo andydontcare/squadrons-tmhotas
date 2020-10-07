@@ -1,15 +1,23 @@
 include "target.tmh"
 
-//int BlendOn;
-//int BlendOff;
+// If you want to adjust the amount of "blend", edit _BLEND_R_
+// below.  The lower the number, the more yaw you'll get out
+// of it.
+define BLEND_R 		48
+define _ROLLYAW_ 	1
+define _ROLL_	 	2
+define _YAW_		3
+
 int BackLight;
 int RollYawBlend;
+int StickMode;
 //program startup
 int main()
 {
 
 	BackLight = 1;
 	RollYawBlend = 1;
+	StickMode = _ROLLYAW_;
 	
 	Configure(&HCougar, MODE_EXCLUDED);
 	Configure(&T16000, MODE_EXCLUDED);
@@ -35,9 +43,14 @@ int main()
 
 	MapAxis(&Joystick, JOYX, DX_X_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
 	MapAxis(&Joystick, JOYY, DX_Y_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
+	MapAxis(&Joystick, RUDDER, DX_ZROT_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
 	MapAxis(&TFRPRudder, TRUDDER, DX_Z_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
-	MapAxis(&Throttle, THR_RIGHT, DX_ZROT_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
-
+	MapAxis(&Throttle, THR_RIGHT, DX_THROTTLE_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
+	if (&LMFD)
+		printf("LMFD connected.\xa");
+	else printf("LMFD not connected.\xa");
+	if (&TFRPRudder) printf("Rudder connected.\xa");
+	else printf("Rudder not connected.\xa");
 
 }
 
@@ -47,24 +60,48 @@ int EventHandle(int type, alias o, int x)
  //o is an array of all button states, x is the index of button pressed.
  //call o[x] to get the state of button: 1 pressed, 0 not pressed.
  //*o[x] is also the position value of an axis!
- 	//printf("Event: %d, %d\xa", o[x], x);
+ 	printf("Event: %d, %d\xa", o[x], x);
 	
 	//handles turning off lights and disabling roll/yaw blending
-	if (&o == &Joystick & x == 256 & RollYawBlend == 1) {
-		TrimDXAxis(DX_Z_AXIS, SET(o[x]/64));
-		//printf("Trimming Z!\xa");
+	if (&o == &Joystick & x == 256 & StickMode == _ROLLYAW_) {
+		if (o[SC] == 0) {
+			TrimDXAxis(DX_YROT_AXIS, SET(o[x]/BLEND_R));
+			printf("Trimming virtual yaw...\xa");
+		}
+		else printf("Rolling...\xa");
 	}
+	else if (&o == &Joystick & x == 256 & StickMode == _YAW_) {
+		//TrimDXAxis(DX_X_AXIS, SET(0));
+		TrimDXAxis(DX_YROT_AXIS, SET(o[x]));
+		return 0;
+	}
+	
+	if (&o == &TFRPRudder & x == 258) {
+		TrimDXAxis(DX_YROT_AXIS, SET(o[x]/24));
+		return 0;
+	}
+	
+	if (&o == &Throttle & x == SC & StickMode != _YAW_) {
+		if (o[x] == 1) {
+			StickMode = _ROLL_;
+			TrimDXAxis(DX_YROT_AXIS, SET(0));
+		}
+		else StickMode = _ROLLYAW_;
+	}
+	
 	if (&o == &Throttle & (x == EFLNORM | x == EFRNORM) & o[x] == 1) {
 
 		if (x == EFRNORM & o[EFLNORM] == 1) setBackLight(1);
 		if (x == EFLNORM & o[EFRNORM] == 1) setBackLight(1);
-		RollYawBlend = 1;
+		//RollYawBlend = 1;
+		StickMode = _ROLLYAW_;
 	}
 	if (&o == &Throttle & (x == EFLOVER | x == EFROVER) & o[x] == 1) {
 		//printf("Button: %d, state: %d\xa", x, o[x]);
 		if (x == EFROVER & o[EFLOVER] == 1) setBackLight(0);
 		if (x == EFLOVER & o[EFROVER] == 1) setBackLight(0);
-		RollYawBlend = 0;
+		//RollYawBlend = 0;
+		StickMode = _YAW_;
 	}
     DefaultMapping(&o, x);
 	
@@ -83,4 +120,4 @@ int setBackLight(int stat) {
 		return 0;
 	}
 	else return -1;
-}
+} 
