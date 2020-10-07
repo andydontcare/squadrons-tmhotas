@@ -1,0 +1,97 @@
+include "target.tmh"
+
+//int BlendOn;
+//int BlendOff;
+int BackLight;
+int RollYawBlend;
+//program startup
+int main()
+{
+
+	BackLight = 1;
+	RollYawBlend = 1;
+	
+	Configure(&HCougar, MODE_EXCLUDED);
+	Configure(&T16000, MODE_EXCLUDED);
+	Configure(&T16000L, MODE_EXCLUDED);
+	Configure(&LMFD, MODE_EXCLUDED);
+	Configure(&RMFD, MODE_EXCLUDED);
+	Configure(&TWCSThrottle, MODE_EXCLUDED);
+	Configure(&TFRPRudder, MODE_FILTERED);
+	
+    if(Init(&EventHandle)) return 1; // declare the event handler, return on error
+	SetKBRate(32, 50);
+	SetKBLayout(KB_ENG);
+	 
+	//add initialization code here
+	ActKey(PULSE+KEYON+LED(&Throttle, LED_INTENSITY, 129));
+	ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT-LED1));
+	ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT-LED2));
+	ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT-LED3));
+	ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT-LED4));
+	ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT-LED5));
+	ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT+LED0));
+
+
+	MapAxis(&Joystick, JOYX, DX_X_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
+	MapAxis(&Joystick, JOYY, DX_Y_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
+	MapAxis(&TFRPRudder, TRUDDER, DX_Z_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
+	MapAxis(&Throttle, THR_RIGHT, DX_ZROT_AXIS, AXIS_NORMAL, MAP_ABSOLUTE);
+
+
+}
+
+//int BlendOn() {
+//	MapKey(&Throttle, EFRNORM, LED(&Throttle, LED_ONOFF, LED_CURRENT+LED0));
+//}
+
+//int BlendOff() {
+//	MapKey(&Throttle, EFROVER, LED(&Throttle, LED_ONOFF, LED_CURRENT-LED0));
+//}
+
+//event handler
+int EventHandle(int type, alias o, int x)
+{
+ //o is an array of all button states, x is the index of button pressed.
+ //call o[x] to get the state of button: 1 pressed, 0 not pressed.
+	if (&o == &Throttle & x == APDIS & o[x] == 0) {
+		printf("APDIS pressed");
+		if (BackLight == 0) {
+			ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT+LED0));
+			BackLight = 1;
+		}
+		else if (BackLight == 1) {
+			ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT-LED0));
+			BackLight = 0;
+		}
+	}
+	
+	//handles turning off lights and disabling roll/yaw blending
+	if (&o == &Throttle & (x == EFLNORM | x == EFRNORM) & o[x] == 1) {
+
+		if (x == EFRNORM & o[EFLNORM] == 1) setBackLight(1);
+		if (x == EFLNORM & o[EFRNORM] == 1) setBackLight(1);
+	}
+	if (&o == &Throttle & (x == EFLOVER | x == EFROVER) & o[x] == 1) {
+		//printf("Button: %d, state: %d\xa", x, o[x]);
+		if (x == EFROVER & o[EFLOVER] == 1) setBackLight(0);
+		if (x == EFLOVER & o[EFROVER] == 1) setBackLight(0);
+	}
+    DefaultMapping(&o, x);
+	
+	//add event handling code here
+}
+
+int setBackLight(int stat) {
+	if (stat == 1) {
+		ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT+LED0));
+		BackLight = stat;
+		return 1;
+	}
+	else if (stat == 0) {
+		ActKey(PULSE+KEYON+LED(&Throttle, LED_ONOFF, LED_CURRENT-LED0));
+		BackLight = stat;
+		return 0;
+	}
+	else return -1;
+}
