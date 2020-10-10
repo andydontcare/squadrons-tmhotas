@@ -19,12 +19,6 @@ int main()
 	RollYawBlend = 1;
 	StickMode = _ROLLYAW_;
 	
-	Configure(&HCougar, MODE_EXCLUDED);
-	Configure(&T16000, MODE_EXCLUDED);
-	Configure(&T16000L, MODE_EXCLUDED);
-	Configure(&LMFD, MODE_EXCLUDED);
-	Configure(&RMFD, MODE_EXCLUDED);
-	Configure(&TWCSThrottle, MODE_EXCLUDED);
 //	Configure(&TFRPRudder, MODE_FILTERED);
 	
     if(Init(&EventHandle)) return 1; // declare the event handler, return on error
