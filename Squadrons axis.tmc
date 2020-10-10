@@ -25,7 +25,7 @@ int main()
 	Configure(&LMFD, MODE_EXCLUDED);
 	Configure(&RMFD, MODE_EXCLUDED);
 	Configure(&TWCSThrottle, MODE_EXCLUDED);
-	Configure(&TFRPRudder, MODE_FILTERED);
+//	Configure(&TFRPRudder, MODE_FILTERED);
 	
     if(Init(&EventHandle)) return 1; // declare the event handler, return on error
 	SetKBRate(32, 50);
